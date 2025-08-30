@@ -1,0 +1,121 @@
+/* General Page Styling */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #0f1115;
+    color: #e0faff;
+    line-height: 1.6;
+}
+
+header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(90deg, #0a6d8c, #09495c);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-bottom: 2px solid #0f6d8c;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+}
+
+/* Sections */
+section {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #1a1d24;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+section h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    border-bottom: 2px solid #0a6d8c;
+    padding-bottom: 0.5rem;
+}
+
+ul {
+    padding-left: 1.5rem;
+}
+
+ul li {
+    margin: 0.5rem 0;
+}
+
+/* Horizontal Rules */
+hr {
+    border: none;
+    height: 2px;
+    background: #0a6d8c;
+    margin: 3rem auto;
+    width: 80%;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1rem;
+    background-color: #0a6d8c;
+    color: #ffffff;
+    font-weight: bold;
+    border-top: 2px solid #09495c;
+}
+
+/* AI Assistant Form */
+#ai-assistant {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #1a1d24;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+#ai-form {
+    display: flex;
+    gap: 1rem;
+}
+
+#ai-form input[type=text] {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #0a6d8c;
+    background-color: #12141a;
+    color: #e0faff;
+    font-size: 1rem;
+}
+
+#ai-form input[type=text]::placeholder {
+    color: #a0b0c0;
+}
+
+#ai-form button {
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    background-color: #0a6d8c;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#ai-form button:hover {
+    background-color: #09495c;
+}
+
+/* AI Response */
+#ai-response {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #12141a;
+    border-left: 4px solid #0a6d8c;
+    border-radius: 8px;
+    min-height: 50px;
+    font-size: 1rem;
+}

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aqualithia - General Overview</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>🏛️ General Overview</h1>
+    </header>
+
+    <!-- General Info -->
+    <section>
+        <h2>General Info</h2>
+        <ul>
+            <li><strong>Name:</strong> The Sovereign Ceremonial Republic of Aqualithia</li>
+            <li><strong>Type:</strong> Micronation with symbolic sovereignty, rooted in creative governance and ceremonial bureaucracy</li>
+            <li><strong>Founded:</strong> 26th May 2025 (started as Communist Puffer Empire, later became Republic of Aqualithia)</li>
+            <li><strong>Purpose:</strong> To celebrate imaginative statecraft, ritualized administration, and playful diplomacy</li>
+            <li><strong>Recognition:</strong> Operates within legal boundaries of its host nation; sovereignty is symbolic and respectful</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Location -->
+    <section>
+        <h2>📍 Location</h2>
+        <ul>
+            <li><strong>Territory:</strong> Privately owned residence within a gated community in the USA</li>
+            <li><strong>Status:</strong> Non-contiguous, ceremonial territory</li>
+            <li><strong>Map:</strong> Optional stylized map showing ministries, embassies (digital or symbolic), and borders of imagination</li>
+            <li><strong>Access:</strong> Virtual citizenship and diplomatic engagement encouraged</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Motto & Identity -->
+    <section>
+        <h2>💬 Motto & Identity</h2>
+        <ul>
+            <li>“Precision in Whimsy, Sovereignty in Spirit”</li>
+            <li>“Where Ceremony Meets Reality”</li>
+            <li>“Aqualithia: Governed by Imagination”</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Economy -->
+    <section>
+        <h2>💰 Economy</h2>
+        <ul>
+            <li><strong>Currency:</strong> PUFB (Pufferbucks)</li>
+            <li><strong>Peg System:</strong> Describe how PUFB is pegged (e.g., to USD, ceremonial value, or internal GDP metrics)</li>
+            <li><strong>GDP:</strong> 570,000 Pufferbucks, 350,000 USD</li>
+            <li><strong>Taxation:</strong> 80%</li>
+            <li><strong>Institutions:</strong> Aqualithian Central Bank, Puffer mail</li>
+            <li><strong>Digital Infrastructure:</strong> E-banking platforms, ceremonial checks, budget dashboards</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Government & Roles -->
+    <section>
+        <h2>🧑‍⚖️ Government & Roles</h2>
+        <ul>
+            <li><strong>Structure:</strong> Democracy</li>
+            <li><strong>Key Roles:</strong>
+                <ul>
+                    <li>Sovereign: Head of state (active)</li>
+                    <li>Ministers: Economy, Culture, Diplomacy, Rituals, etc.</li>
+                    <li>Citizens: Rights, duties, and ceremonial titles</li>
+                </ul>
+            </li>
+            <li><strong>Election or Appointment:</strong> By vote</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Culture & Rituals -->
+    <section>
+        <h2>📜 Culture & Rituals</h2>
+        <ul>
+            <li><strong>Ceremonies:</strong> Budget Day, Treaty Signing, Citizen Induction</li>
+            <li><strong>Documents:</strong> Official checks, proclamations, ID cards</li>
+            <li><strong>Holidays:</strong> Founding Day, Sovereignty Week, etc.</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- Digital Citizenship -->
+    <section>
+        <h2>🌐 Digital Citizenship</h2>
+        <ul>
+            <li><strong>Join Aqualithia:</strong> Application form, oath of imagination, digital ID</li>
+            <li><strong>Citizen Portal:</strong> Access to banking, ministries, document generators</li>
+            <li><strong>Embassies:</strong> Virtual embassies or forums for intermicronational diplomacy</li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- AI Assistant -->
+    <section id="ai-assistant">
+        <h2>🤖 Ask the Aqualithia AI Assistant</h2>
+        <form id="ai-form">
+            <input type="text" id="message" name="message" placeholder="Ask a question about Aqualithia..." required>
+            <button type="submit">Ask</button>
+        </form>
+        <div id="ai-response"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Aqualithia. All ceremonial rights reserved.</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById("ai-form");
+        const responseDiv = document.getElementById("ai-response");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const message = document.getElementById("message").value;
+            responseDiv.innerHTML = "<em>Thinking...</em>";
+
+            const formData = new FormData();
+            formData.append("message", message);
+
+            try {
+                const res = await fetch("/ask_ai", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                responseDiv.innerHTML = `<strong>AI:</strong> ${data.answer}`;
+            } catch (err) {
+                responseDiv.innerHTML = "<em>Failed to get response. Please try again.</em>";
+            }
+        });
+    </script>
+</body>
+</html>
