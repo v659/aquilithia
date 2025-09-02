@@ -134,7 +134,7 @@ async function askAI() {
         const data = await res.json();
 
         console.log("AI Response:", data);
-        responseDiv.innerHTML = <strong>AI:</strong> ${data.answer};
+        responseDiv.innerHTML = `<strong>AI:</strong> ${data.answer}`;
         messageInput.value = ""; // clear input
     } catch (err) {
         console.error("Error fetching AI response:", err);
