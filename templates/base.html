@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aqualithia</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+<header>
+    <h1>🏛️ Aqualithia</h1>
+    <nav>
+        <a href="/">Home</a> |
+        {% if not greeting %}
+            <a href="/apply">Apply / Login</a>
+        {% else %}
+            <a href="/logout">Logout</a>
+        {% endif %}
+    </nav>
+    {% if greeting %}
+        <div class="greeting">{{ greeting }}</div>
+    {% endif %}
+</header>
+
+
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
