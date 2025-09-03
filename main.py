@@ -6,6 +6,7 @@ from supabase import create_client, Client
 import bcrypt
 from dotenv import load_dotenv
 from starlette.middleware.sessions import SessionMiddleware
+from datetime import datetime
 import os
 import uuid
 import re
@@ -64,7 +65,7 @@ def ask_ai(message, is_chat=False):
                 • Status: Non-contiguous, ceremonial territory
                 • Map: Optional stylized map showing ministries, embassies (digital or symbolic), and borders of imagination
                 • Access: Virtual citizenship and diplomatic engagement encouraged
-                
+                      
                 
                 ---
                 
@@ -136,16 +137,30 @@ def ask_ai(message, is_chat=False):
         return f"Could not connect to AI service: {e}"
 
 # --- Routes ---
+from datetime import datetime
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     greeting = None
     user = request.session.get("user")
+    timestamp = int(datetime.utcnow().timestamp())  # generate timestamp
+
     if user:
         if user.get("is_admin", False):
             greeting = f"Hello {user['name']} (admin)!"
         else:
             greeting = f"Hello {user['name']}!"
-    return templates.TemplateResponse("index.html", {"request": request, "greeting": greeting})
+
+    # pass timestamp to template
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "greeting": greeting,
+            "timestamp": timestamp
+        }
+    )
+
 
 
 
@@ -164,60 +179,72 @@ async def apply_get(request: Request):
 
 @app.post("/apply", response_class=HTMLResponse)
 async def apply_post(request: Request, name: str = Form(...), password: str = Form(...)):
-    # --- Check if admin credentials match ---
+    print(f"\n=== Apply/Register attempt ===")
+    print(f"Login/Registration attempt for username: {name}")
+
+    # Admin check
     is_admin = False
     if name in ADMIN_CREDENTIALS and ADMIN_CREDENTIALS[name] == password:
         is_admin = True
+        print(f"Admin credentials detected for {name}")
 
-    # Hash password for storage
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password.encode(), salt).decode()
+    # --- Fetch all users for debug ---
+    try:
+        all_users = supabase.table("users").select("*").execute()
+        print(f"All users in table: {all_users.data}")
+    except Exception as e:
+        print(f"Error fetching all users: {e}")
+        all_users = {"data": []}
 
-    # Check if user already exists
-    existing_user = supabase.table("users").select("*").eq("username", name).execute()
-    if existing_user.data:
-        # If password matches, log in
-        stored_hash = existing_user.data[0]["password"]
-        if bcrypt.checkpw(password.encode(), stored_hash.encode()):
-            request.session["user"] = {"name": name, "is_admin": existing_user.data[0].get("is_admin", False)}
+    # Check if user exists
+    try:
+        result = supabase.table("users").select("*").ilike("username", name).execute()
+
+        print(f"Supabase query result for username '{name}': {result.data}")
+    except Exception as e:
+        print(f"Error querying user: {e}")
+        return templates.TemplateResponse("apply.html", {"request": request, "error": f"Database error: {e}"})
+
+    if result.data and len(result.data) > 0:
+        # ✅ User already exists → check password
+        user = result.data[0]
+        stored_hash = user["password"]
+        if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
+            print(f"Password correct. Logging in user {name}")
+            request.session["user"] = {"name": name, "is_admin": user.get("is_admin", False)}
             return RedirectResponse("/", status_code=303)
         else:
+            print(f"Incorrect password attempt for {name}")
             return templates.TemplateResponse("apply.html", {"request": request, "error": "Incorrect password!"})
+    else:
+        # 🆕 New user → register
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        data = {"username": name, "password": hashed_password, "is_admin": is_admin}
 
-    # If new user, register
-    data = {"username": name, "password": hashed_password, "is_admin": is_admin}
-    try:
-        supabase_server.table("users").insert(data).execute()
-    except Exception as e:
-        return templates.TemplateResponse("apply.html", {"request": request, "error": f"Failed to register: {e}"})
+        print(f"Registering new user: {name}, admin={is_admin}")
+        try:
+            supabase_server.table("users").insert(data).execute()
+            print(f"User {name} successfully registered")
+        except Exception as e:
+            print(f"Error registering user {name}: {e}")
+            return templates.TemplateResponse("apply.html", {"request": request, "error": f"Failed to register: {e}"})
 
-    # Log in after registration
-    request.session["user"] = {"name": name, "is_admin": is_admin}
-    return RedirectResponse("/", status_code=303)
+        # Log in new user
+        request.session["user"] = {"name": name, "is_admin": is_admin}
+        return RedirectResponse("/", status_code=303)
 
 
 
-@app.post("/login")
-async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    # ✅ Verify username and password from DB here...
-    user = {"name": username, "is_admin": True}  # example
-
-    # Save to session
-    request.session["user"] = {
-        "name": user["name"],
-        "is_admin": user["is_admin"]
-    }
-
-    return RedirectResponse("/", status_code=303)
 
 @app.get("/logout")
 async def logout(request: Request):
-    session_id = request.cookies.get("session_id")
-    if session_id in sessions:
-        del sessions[session_id]
+    # Clear session stored in middleware
+    request.session.clear()
+
+    # Redirect back to homepage
     response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("session_id")
     return response
+
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -227,22 +254,25 @@ async def login_get(request: Request):
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
-    # Fetch user from Supabase
-    result = supabase.table("users").select("*").eq("username", username).execute()
+    print("Login attempt:", username)
+    all_users = supabase.table("users").select("*").execute()
+    print("All users in table:", all_users.data)
+    result = supabase_server.table("users").select("*").eq("username", username).execute()
+    print("Supabase result:", result.data)
     if not result.data:
         return templates.TemplateResponse("apply.html", {"request": request, "error": "Invalid username or password"})
 
     user = result.data[0]
+    stored_hash = user["password"]
+    print("Stored hash:", stored_hash)
 
-    # Check password
-    if not bcrypt.checkpw(password.encode(), user["password"].encode()):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid username or password"})
+    if not bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
+        print("Password mismatch")
+        return templates.TemplateResponse("apply.html", {"request": request, "error": "Invalid username or password"})
 
-    # Save to session
-    request.session["user"] = {
-        "name": user["username"],
-        "is_admin": user.get("is_admin", False)
-    }
-
+    request.session["user"] = {"name": user["username"], "is_admin": user.get("is_admin", False)}
     return RedirectResponse("/", status_code=303)
+
+
+
 
