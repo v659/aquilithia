@@ -275,5 +275,67 @@ async def login_post(request: Request, username: str = Form(...), password: str 
     return RedirectResponse("/", status_code=303)
 
 
+from fastapi import Form
+
+# Show the mail form
+@app.get("/send_mail", response_class=HTMLResponse)
+async def send_mail_form(request: Request):
+    user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/apply", status_code=303)
+
+    return templates.TemplateResponse("send_mail.html", {"request": request})
+
+# Handle form submission
+@app.post("/send_mail", response_class=HTMLResponse)
+async def send_mail(
+    request: Request,
+    subject: str = Form(...),
+    body: str = Form(...),
+    recipient: str = Form(None)
+):
+    user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/apply", status_code=303)
+
+    sender_email = user["name"] + "@aqualithia.org"
+
+    data = {
+        "sender": sender_email,
+        "recipient": recipient,
+        "subject": subject,
+        "body": body
+    }
+
+    try:
+        supabase_server.table("messages").insert(data).execute()
+        return templates.TemplateResponse("send_mail.html", {
+            "request": request,
+            "success": "Message sent successfully!"
+        })
+    except Exception as e:
+        return templates.TemplateResponse("send_mail.html", {
+            "request": request,
+            "error": f"Failed to send: {e}"
+        })
+
+
+
+# Inbox
+@app.get("/inbox", response_class=HTMLResponse)
+async def inbox(request: Request):
+    user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/apply", status_code=303)
+
+    email = user["name"] + "@aqualithia.org"
+
+    # Fetch messages addressed to user or broadcast
+    result = supabase.table("messages").select("*").or_(f"recipient.eq.{email},recipient.is.null").order("sent_at", desc=True).execute()
+
+    return templates.TemplateResponse("inbox.html", {
+        "request": request,
+        "messages": result.data
+    })
 
 
