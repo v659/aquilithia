@@ -300,11 +300,13 @@ async def send_mail(
 
     sender_email = user["name"] + "@aqualithia.org"
 
+    recipient = recipient or None
     data = {
         "sender": sender_email,
-        "recipient": recipient,
+        "recipient": recipient,  # will be NULL if no recipient
         "subject": subject,
-        "body": body
+        "body": body,
+        "sent_at": datetime.utcnow().isoformat()
     }
 
     try:
@@ -331,7 +333,11 @@ async def inbox(request: Request):
     email = user["name"] + "@aqualithia.org"
 
     # Fetch messages addressed to user or broadcast
-    result = supabase.table("messages").select("*").or_(f"recipient.eq.{email},recipient.is.null").order("sent_at", desc=True).execute()
+    result = supabase.table("messages").select("*").or_(
+        f"recipient.eq.{email},recipient.is.null,recipient.eq."
+    ).order("sent_at", desc=True).execute()
+
+    print("Inbox query result:", result.data)
 
     return templates.TemplateResponse("inbox.html", {
         "request": request,
