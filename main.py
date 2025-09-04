@@ -178,9 +178,9 @@ async def apply_get(request: Request):
     return templates.TemplateResponse("apply.html", {"request": request})
 
 @app.post("/apply", response_class=HTMLResponse)
-async def apply_post(request: Request, name: str = Form(...), password: str = Form(...)):
+async def apply_post(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
     print(f"\n=== Apply/Register attempt ===")
-    print(f"Login/Registration attempt for username: {name}")
+    print(f"Username: {name}, Email: {email}")
 
     # Admin check
     is_admin = False
@@ -188,25 +188,20 @@ async def apply_post(request: Request, name: str = Form(...), password: str = Fo
         is_admin = True
         print(f"Admin credentials detected for {name}")
 
-    # --- Fetch all users for debug ---
+    # Fetch all users for debug
     try:
-        all_users = supabase.table("users").select("*").execute()
+        all_users = supabase_server.table("users").select("*").execute()
         print(f"All users in table: {all_users.data}")
     except Exception as e:
         print(f"Error fetching all users: {e}")
         all_users = {"data": []}
 
     # Check if user exists
-    try:
-        result = supabase.table("users").select("*").ilike("username", name).execute()
-
-        print(f"Supabase query result for username '{name}': {result.data}")
-    except Exception as e:
-        print(f"Error querying user: {e}")
-        return templates.TemplateResponse("apply.html", {"request": request, "error": f"Database error: {e}"})
+    result = supabase_server.table("users").select("*").eq("username", name).execute()
+    print(f"Query result for username '{name}': {result.data}")
 
     if result.data and len(result.data) > 0:
-        # ✅ User already exists → check password
+        # User exists → check password
         user = result.data[0]
         stored_hash = user["password"]
         if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
@@ -214,14 +209,19 @@ async def apply_post(request: Request, name: str = Form(...), password: str = Fo
             request.session["user"] = {"name": name, "is_admin": user.get("is_admin", False)}
             return RedirectResponse("/", status_code=303)
         else:
-            print(f"Incorrect password attempt for {name}")
+            print(f"Incorrect password for {name}")
             return templates.TemplateResponse("apply.html", {"request": request, "error": "Incorrect password!"})
     else:
-        # 🆕 New user → register
+        # New user → register
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-        data = {"username": name, "password": hashed_password, "is_admin": is_admin}
+        data = {
+            "username": name,
+            "email": email,  # <-- store email here
+            "password": hashed_password,
+            "is_admin": is_admin
+        }
 
-        print(f"Registering new user: {name}, admin={is_admin}")
+        print(f"Registering new user: {name}, email: {email}, admin={is_admin}")
         try:
             supabase_server.table("users").insert(data).execute()
             print(f"User {name} successfully registered")
@@ -232,6 +232,7 @@ async def apply_post(request: Request, name: str = Form(...), password: str = Fo
         # Log in new user
         request.session["user"] = {"name": name, "is_admin": is_admin}
         return RedirectResponse("/", status_code=303)
+
 
 
 
