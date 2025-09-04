@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Inbox</h1>
+
+{% if messages %}
+  <ul>
+  {% for msg in messages %}
+    <li>
+      <strong>{{ msg.subject }}</strong><br>
+      From: {{ msg.sender }}<br>
+      To: {{ msg.recipient if msg.recipient else "Everyone" }}<br>
+      {{ msg.body }}<br>
+      <small>{{ msg.sent_at }}</small>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No messages.</p>
+{% endif %}
+{% endblock %}

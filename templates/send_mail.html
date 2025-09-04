@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📧 Send Mail</h2>
+
+{% if success %}
+<p style="color: green;">{{ success }}</p>
+{% endif %}
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<form action="/send_mail" method="post">
+    <input type="text" name="subject" placeholder="Subject" required><br><br>
+    <textarea name="body" placeholder="Message" required></textarea><br><br>
+    <input type="text" name="recipient" placeholder="Recipient (leave empty to send to everyone)"><br><br>
+    <button type="submit">Send</button>
+</form>
+{% endblock %}
