@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Aqualithia</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}?v={{ timestamp }}">
+
+
+
 </head>
 <body>
 <header>
@@ -13,6 +16,8 @@
         {% if not greeting %}
             <a href="/apply">Apply / Login</a>
         {% else %}
+            <a href="/inbox">Inbox</a> |
+            <a href="/send_mail">Send Mail</a> |
             <a href="/logout">Logout</a>
         {% endif %}
     </nav>
@@ -20,6 +25,7 @@
         <div class="greeting">{{ greeting }}</div>
     {% endif %}
 </header>
+
 
 
 
