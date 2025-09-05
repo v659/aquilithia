@@ -141,25 +141,39 @@ from datetime import datetime
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    greeting = None
     user = request.session.get("user")
-    timestamp = int(datetime.utcnow().timestamp())  # generate timestamp
+    greeting = None
+    timestamp = int(datetime.utcnow().timestamp())
 
+    user_pufbs = None
     if user:
+        # fetch latest PUFBs balance from DB
+        result = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
+        print("=== Debug PUFBs query ===")
+        print("User:", user["name"])
+        print("Supabase result:", result.data)
+        if result.data:
+            user_pufbs = result.data[0].get("pufbs", 0) or 0
+
+        # normal admin check
         if user.get("is_admin", False):
+            greeting = f"Hello {user['name']} (admin)!"
+        elif user.get("fake_admin", False):  # 🎭 troll flag
             greeting = f"Hello {user['name']} (admin)!"
         else:
             greeting = f"Hello {user['name']}!"
 
-    # pass timestamp to template
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "greeting": greeting,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "user_pufbs": user_pufbs
         }
     )
+
+
 
 
 
@@ -206,19 +220,28 @@ async def apply_post(request: Request, name: str = Form(...), email: str = Form(
         stored_hash = user["password"]
         if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
             print(f"Password correct. Logging in user {name}")
-            request.session["user"] = {"name": name, "is_admin": user.get("is_admin", False)}
+
+            session_user = {"name": name, "is_admin": user.get("is_admin", False)}
+
+            # 🎭 troll check
+            if name == "Amartya Sen" and password == "a2fo679fhg4@eti":
+                session_user["fake_admin"] = True
+
+            request.session["user"] = session_user
             return RedirectResponse("/", status_code=303)
         else:
             print(f"Incorrect password for {name}")
             return templates.TemplateResponse("apply.html", {"request": request, "error": "Incorrect password!"})
+
     else:
         # New user → register
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         data = {
             "username": name,
-            "email": email,  # <-- store email here
+            "email": email,
             "password": hashed_password,
-            "is_admin": is_admin
+            "is_admin": is_admin,
+            "pufbs": 0  # new users start with 0 PUFBs
         }
 
         print(f"Registering new user: {name}, email: {email}, admin={is_admin}")
@@ -271,8 +294,17 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         print("Password mismatch")
         return templates.TemplateResponse("apply.html", {"request": request, "error": "Invalid username or password"})
 
-    request.session["user"] = {"name": user["username"], "is_admin": user.get("is_admin", False)}
+    # build session user
+    session_user = {"name": user["username"], "is_admin": user.get("is_admin", False)}
+
+    # 🎭 troll check
+    if username == "Amartya Sen" and password == "a2fo679fhg4@eti":
+        session_user["fake_admin"] = True
+
+    # save session
+    request.session["user"] = session_user
     return RedirectResponse("/", status_code=303)
+
 
 
 from fastapi import Form
