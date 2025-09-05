@@ -1,20 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Inbox</h1>
+<h1>📥 Inbox</h1>
 
 {% if messages %}
-  <ul>
-  {% for msg in messages %}
-    <li>
-      <strong>{{ msg.subject }}</strong><br>
-      From: {{ msg.sender }}<br>
-      To: {{ msg.recipient if msg.recipient else "Everyone" }}<br>
-      {{ msg.body }}<br>
-      <small>{{ msg.sent_at }}</small>
-    </li>
-  {% endfor %}
-  </ul>
+  <div class="inbox">
+    {% for msg in messages %}
+      <div class="message-card">
+        <div class="message-header">
+          <span class="subject">{{ msg.subject }}</span>
+          <span class="date">{{ msg.sent_at | replace("T", " ") }}</span>
+        </div>
+        <div class="message-meta">
+          <span class="from">From: <b>{{ msg.sender }}</b></span> |
+          <span class="to">To: <b>{{ msg.recipient if msg.recipient else "Everyone" }}</b></span>
+        </div>
+        <div class="message-body">
+          {{ msg.body }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 {% else %}
-  <p>No messages.</p>
+  <p>No messages yet.</p>
 {% endif %}
 {% endblock %}
