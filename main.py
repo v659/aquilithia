@@ -144,16 +144,24 @@ async def index(request: Request):
     user = request.session.get("user")
     greeting = None
     timestamp = int(datetime.utcnow().timestamp())
+    result = supabase.table("users").select("username, pufbs").execute()
+    print("All users:", result.data)
+    print("Current session user:", user["name"])
 
     user_pufbs = None
     if user:
         # fetch latest PUFBs balance from DB
+        result1 = supabase.table("users").select("*").execute()
+        print(result1.data)
+
         result = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
-        print("=== Debug PUFBs query ===")
-        print("User:", user["name"])
-        print("Supabase result:", result.data)
+        print("PUFBs query result:", result.data)
+        print(result.data)
+        print(user)
         if result.data:
-            user_pufbs = result.data[0].get("pufbs", 0) or 0
+            user_pufbs = result.data[0].get("pufbs") or 0
+        else:
+            user_pufbs = 0
 
         # normal admin check
         if user.get("is_admin", False):
@@ -316,7 +324,22 @@ async def send_mail_form(request: Request):
     if not user:
         return RedirectResponse("/apply", status_code=303)
 
-    return templates.TemplateResponse("send_mail.html", {"request": request})
+    # fetch all usernames from Supabase
+    result = supabase.table("users").select("username").execute()
+    raw_users = result.data if result.data else []
+
+    # append @aqualithia.org to each username
+    users = [f"{u['username']}@aqualithia.org" for u in raw_users]
+    print(users)
+    return templates.TemplateResponse(
+        "send_mail.html",
+        {
+            "request": request,
+            "users": users,
+        }
+    )
+
+
 
 # Handle form submission
 @app.post("/send_mail", response_class=HTMLResponse)
