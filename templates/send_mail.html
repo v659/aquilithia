@@ -13,7 +13,15 @@
 <form action="/send_mail" method="post">
     <input type="text" name="subject" placeholder="Subject" required><br><br>
     <textarea name="body" placeholder="Message" required></textarea><br><br>
-    <input type="text" name="recipient" placeholder="Recipient (leave empty to send to everyone)"><br><br>
+
+    <label for="recipient">Recipient:</label><br>
+    <select name="recipient" id="recipient">
+        <option value="">-- Send to Everyone --</option>
+        {% for email in users %}
+            <option value="{{ email }}">{{ email }}</option>
+        {% endfor %}
+    </select><br><br>
+
     <button type="submit">Send</button>
 </form>
 {% endblock %}
