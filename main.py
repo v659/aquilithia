@@ -144,20 +144,9 @@ async def index(request: Request):
     user = request.session.get("user")
     greeting = None
     timestamp = int(datetime.utcnow().timestamp())
-    result = supabase.table("users").select("username, pufbs").execute()
-    print("All users:", result.data)
-    print("Current session user:", user["name"])
-
     user_pufbs = None
     if user:
-        # fetch latest PUFBs balance from DB
-        result1 = supabase.table("users").select("*").execute()
-        print(result1.data)
-
         result = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
-        print("PUFBs query result:", result.data)
-        print(result.data)
-        print(user)
         if result.data:
             user_pufbs = result.data[0].get("pufbs") or 0
         else:
@@ -201,33 +190,26 @@ async def apply_get(request: Request):
 
 @app.post("/apply", response_class=HTMLResponse)
 async def apply_post(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
-    print(f"\n=== Apply/Register attempt ===")
-    print(f"Username: {name}, Email: {email}")
 
     # Admin check
     is_admin = False
     if name in ADMIN_CREDENTIALS and ADMIN_CREDENTIALS[name] == password:
         is_admin = True
-        print(f"Admin credentials detected for {name}")
 
     # Fetch all users for debug
     try:
         all_users = supabase_server.table("users").select("*").execute()
-        print(f"All users in table: {all_users.data}")
     except Exception as e:
-        print(f"Error fetching all users: {e}")
         all_users = {"data": []}
 
     # Check if user exists
     result = supabase_server.table("users").select("*").eq("username", name).execute()
-    print(f"Query result for username '{name}': {result.data}")
 
     if result.data and len(result.data) > 0:
         # User exists → check password
         user = result.data[0]
         stored_hash = user["password"]
         if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
-            print(f"Password correct. Logging in user {name}")
 
             session_user = {"name": name, "is_admin": user.get("is_admin", False)}
 
@@ -238,7 +220,6 @@ async def apply_post(request: Request, name: str = Form(...), email: str = Form(
             request.session["user"] = session_user
             return RedirectResponse("/", status_code=303)
         else:
-            print(f"Incorrect password for {name}")
             return templates.TemplateResponse("apply.html", {"request": request, "error": "Incorrect password!"})
 
     else:
@@ -251,8 +232,6 @@ async def apply_post(request: Request, name: str = Form(...), email: str = Form(
             "is_admin": is_admin,
             "pufbs": 0  # new users start with 0 PUFBs
         }
-
-        print(f"Registering new user: {name}, email: {email}, admin={is_admin}")
         try:
             supabase_server.table("users").insert(data).execute()
             print(f"User {name} successfully registered")
@@ -286,17 +265,13 @@ async def login_get(request: Request):
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
-    print("Login attempt:", username)
     all_users = supabase.table("users").select("*").execute()
-    print("All users in table:", all_users.data)
     result = supabase_server.table("users").select("*").eq("username", username).execute()
-    print("Supabase result:", result.data)
     if not result.data:
         return templates.TemplateResponse("apply.html", {"request": request, "error": "Invalid username or password"})
 
     user = result.data[0]
     stored_hash = user["password"]
-    print("Stored hash:", stored_hash)
 
     if not bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
         print("Password mismatch")
@@ -330,7 +305,6 @@ async def send_mail_form(request: Request):
 
     # append @aqualithia.org to each username
     users = [f"{u['username']}@aqualithia.org" for u in raw_users]
-    print(users)
     return templates.TemplateResponse(
         "send_mail.html",
         {
