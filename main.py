@@ -441,3 +441,8 @@ async def bank_transfer(
             "users": [],
             "current_user": sender
         })
+
+@app.get("/healthz")
+async def healthcheck():
+    return {"status": "ok"}
+
