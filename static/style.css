@@ -1,4 +1,4 @@
-/* General Page Styling */
+/* === Global Page Styling === */
 body {
     margin: 0;
     padding: 0;
@@ -8,6 +8,7 @@ body {
     line-height: 1.6;
 }
 
+/* === Header & Navigation === */
 header {
     text-align: center;
     padding: 2rem 1rem;
@@ -21,7 +22,36 @@ header h1 {
     margin: 0;
 }
 
-/* Sections */
+nav {
+    margin-top: 1rem;
+}
+
+nav a {
+    color: #e0faff;
+    text-decoration: none;
+    margin: 0 0.6rem;
+    font-weight: bold;
+    transition: color 0.2s ease;
+}
+
+nav a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* Greeting Box */
+#greeting {
+    background-color: #0a6d8c;
+    color: #ffffff;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* === Sections === */
 section {
     max-width: 900px;
     margin: 2rem auto;
@@ -38,15 +68,15 @@ section h2 {
     padding-bottom: 0.5rem;
 }
 
+/* Lists */
 ul {
     padding-left: 1.5rem;
 }
-
 ul li {
     margin: 0.5rem 0;
 }
 
-/* Horizontal Rules */
+/* Divider */
 hr {
     border: none;
     height: 2px;
@@ -55,17 +85,19 @@ hr {
     width: 80%;
 }
 
-/* Footer */
+/* === Footer === */
 footer {
+    margin-top: 2rem;
     text-align: center;
     padding: 1rem;
     background-color: #0a6d8c;
     color: #ffffff;
     font-weight: bold;
     border-top: 2px solid #09495c;
+    border-radius: 8px 8px 0 0;
 }
 
-/* AI Assistant Section */
+/* === AI Assistant === */
 #ai-assistant {
     max-width: 900px;
     margin: 2rem auto;
@@ -75,7 +107,7 @@ footer {
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-/* AI Form Wrapper */
+/* AI Form */
 #ai-form-wrapper {
     display: flex;
     gap: 1rem;
@@ -97,19 +129,17 @@ footer {
 }
 
 #ai-form-wrapper button {
-    all: unset; /* removes all browser default styles */
+    all: unset;
     display: inline-block;
     padding: 0.7rem 1.5rem;
     border-radius: 8px;
-    border: none;
     background-color: #0a6d8c;
     color: #ffffff;
     font-weight: bold;
     cursor: pointer;
     text-align: center;
-    transition: 0.3s;
+    transition: background 0.3s;
 }
-
 
 #ai-form-wrapper button:hover {
     background-color: #09495c;
@@ -128,89 +158,102 @@ footer {
     overflow-wrap: break-word;
 }
 
-#greeting {
-    background-color: #0a6d8c;
-    color: #ffffff;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 1.5rem;
-    font-weight: bold;
-}
+/* === Forms (Login / Register / Send Mail) === */
 form {
     display: flex;
     flex-direction: column;
-    max-width: 400px;
-    margin: 1rem 0;
+    max-width: 450px;
+    margin: 1.5rem auto;
+    background: #1a1d24;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
-form input {
-    padding: 0.5rem;
+form input,
+form textarea,
+form select {
+    padding: 0.7rem;
     margin-bottom: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+    border-radius: 6px;
+    border: 1px solid #0a6d8c;
+    background-color: #12141a;
+    color: #e0faff;
+    font-size: 1rem;
+}
+
+form input::placeholder,
+form textarea::placeholder {
+    color: #a0b0c0;
+}
+
+form textarea {
+    resize: vertical;
+    min-height: 100px;
 }
 
 form button {
-    padding: 0.5rem;
+    padding: 0.7rem;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     background-color: #0a6d8c;
     color: white;
+    font-weight: bold;
     cursor: pointer;
+    transition: background 0.3s;
 }
 
 form button:hover {
     background-color: #095a6a;
 }
 
+/* === Inbox Styling === */
 .inbox {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .message-card {
-  background: #f9f9ff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-  transition: transform 0.1s ease;
+    background: #1a1d24;
+    border: 1px solid #0a6d8c;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    transition: transform 0.1s ease;
 }
 
 .message-card:hover {
-  transform: translateY(-2px);
+    transform: translateY(-2px);
 }
 
 .message-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 0.3rem;
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    color: #e0faff;
+    margin-bottom: 0.3rem;
 }
 
 .subject {
-  font-size: 1.1em;
+    font-size: 1.1em;
 }
 
 .date {
-  font-size: 0.85em;
-  color: #666;
+    font-size: 0.85em;
+    color: #a0b0c0;
 }
 
 .message-meta {
-  font-size: 0.9em;
-  color: #555;
-  margin-bottom: 0.6rem;
+    font-size: 0.9em;
+    color: #ccc;
+    margin-bottom: 0.6rem;
 }
 
 .message-body {
-  font-size: 1em;
-  line-height: 1.4;
-  color: #222;
-  white-space: pre-line; /* preserves line breaks */
+    font-size: 1em;
+    line-height: 1.4;
+    color: #e0faff;
+    white-space: pre-line; /* preserves line breaks */
 }
