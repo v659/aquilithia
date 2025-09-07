@@ -12,13 +12,14 @@ import uuid
 import re
 import requests
 import json
+
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 ADMIN_CREDENTIALS = json.loads(os.getenv("ADMIN_CREDENTIALS", "{}"))
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)          # for public/read operations
-supabase_server: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY) # for inserts, updates
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)  # for public/read operations
+supabase_server: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)  # for inserts, updates
 # Simple in-memory session store for demo
 sessions = {}
 app = FastAPI()
@@ -32,8 +33,11 @@ templates = Jinja2Templates(directory="templates")
 
 # --- AI Function ---
 CLEANR = re.compile('<.*?>')
+
+
 def cleanhtml(raw_html):
     return re.sub(CLEANR, '', raw_html)
+
 
 def ask_ai(message, is_chat=False):
     url = "https://ai.hackclub.com/chat/completions"
@@ -45,8 +49,8 @@ def ask_ai(message, is_chat=False):
             "Give direct responses only, no thoughts. If a user is asking a specific questions, give a specific"
             "answer from the system prompts you have been given. for example, if the user asks what are the cultures and "
             "rituals, respond with a summary of the section 📜 Culture & Rituals"
-    
-            
+
+
 
             """Here is some information about aqualithya: 🏛️ General Overview
 
@@ -55,65 +59,65 @@ def ask_ai(message, is_chat=False):
                 • Founded: 26th May 2025 as Communist puffer empire later became the republic of aqualithia
                 • Purpose: To celebrate imaginative statecraft, ritualized administration, and playful diplomacy
                 • Recognition: Operates within legal boundaries of its host nation; sovereignty is symbolic and respectful
-                
-                
+
+
                 ---
-                
+
                 📍 Location
-                
+
                 • Territory: Privately owned residence within a gated community in the USA
                 • Status: Non-contiguous, ceremonial territory
                 • Map: Optional stylized map showing ministries, embassies (digital or symbolic), and borders of imagination
                 • Access: Virtual citizenship and diplomatic engagement encouraged
-                      
-                
+
+
                 ---
-                
+
                 💬 Motto & Identity
-                
+
                 • Motto: Examples:• “Precision in Whimsy, Sovereignty in Spirit”
                 • “Where Ceremony Meets Reality”
                 • “Aqualithia: Governed by Imagination”
-                
-                
+
+
                 ---
-                
+
                 💰 Economy
-                
+
                 • Currency: PUFB (Pufferbucks)
                 • Peg System: Describe how PUFB is pegged (e.g., to USD, ceremonial value, or internal GDP metrics)
                 • GDP: 570000 Puffer bucks, 350000 dollars 
                 • Taxation: 0% + 5% VAT
                 • Institutions: Aqualithian Central Bank, Puffer mail 
                 • Digital Infrastructure: E-banking platforms, ceremonial checks, budget dashboards
-                
-                
+
+
                 ---
-                
+
                 🧑‍⚖️ Government & Roles
-                
+
                 • Structure: Democracy
                 • Key Roles:• Sovereign: Head of state (active)
                 • Ministers: Economy, Culture, Diplomacy, Rituals, etc.
                 • Citizens: Rights, duties, and ceremonial titles
-                
+
                 • Election or Appointment:By vote
-                
-                
+
+
                 ---
-                
+
                 📜 Culture & Rituals
-                
+
                 • Ceremonies: Budget Day, Treaty Signing, Citizen Induction
                 • Documents: Official checks, proclamations, ID cards
-                
+
                 • Holidays: Founding Day, Sovereignty Week, etc.
-                
-                
+
+
                 ---
-                
+
                 🌐 Digital Citizenship
-                
+
                 • Join Aqualithia: Application form, oath of imagination, digital ID
                 • Citizen Portal: Access to banking, ministries, document generators
                 • Embassies: Virtual embassies or forums for intermicronational diplomacy"""
@@ -136,8 +140,10 @@ def ask_ai(message, is_chat=False):
     except Exception as e:
         return f"Could not connect to AI service: {e}"
 
+
 # --- Routes ---
 from datetime import datetime
+
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -171,26 +177,19 @@ async def index(request: Request):
     )
 
 
-
-
-
-
-
 @app.post("/ask_ai", response_class=JSONResponse)
 async def ask_ai_endpoint(message: str = Form(...)):
     answer = ask_ai(message, is_chat=True)
     return {"answer": answer}
 
 
-
-
 @app.get("/apply", response_class=HTMLResponse)
 async def apply_get(request: Request):
     return templates.TemplateResponse("apply.html", {"request": request})
 
+
 @app.post("/apply", response_class=HTMLResponse)
 async def apply_post(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
-
     # Admin check
     is_admin = False
     if name in ADMIN_CREDENTIALS and ADMIN_CREDENTIALS[name] == password:
@@ -234,17 +233,12 @@ async def apply_post(request: Request, name: str = Form(...), email: str = Form(
         }
         try:
             supabase_server.table("users").insert(data).execute()
-            print(f"User {name} successfully registered")
         except Exception as e:
-            print(f"Error registering user {name}: {e}")
             return templates.TemplateResponse("apply.html", {"request": request, "error": f"Failed to register: {e}"})
 
         # Log in new user
         request.session["user"] = {"name": name, "is_admin": is_admin}
         return RedirectResponse("/", status_code=303)
-
-
-
 
 
 @app.get("/logout")
@@ -255,7 +249,6 @@ async def logout(request: Request):
     # Redirect back to homepage
     response = RedirectResponse(url="/", status_code=303)
     return response
-
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -289,8 +282,8 @@ async def login_post(request: Request, username: str = Form(...), password: str 
     return RedirectResponse("/", status_code=303)
 
 
-
 from fastapi import Form
+
 
 # Show the mail form
 @app.get("/send_mail", response_class=HTMLResponse)
@@ -314,14 +307,13 @@ async def send_mail_form(request: Request):
     )
 
 
-
 # Handle form submission
 @app.post("/send_mail", response_class=HTMLResponse)
 async def send_mail(
-    request: Request,
-    subject: str = Form(...),
-    body: str = Form(...),
-    recipient: str = Form(None)
+        request: Request,
+        subject: str = Form(...),
+        body: str = Form(...),
+        recipient: str = Form(None)
 ):
     user = request.session.get("user")
     if not user:
@@ -351,7 +343,6 @@ async def send_mail(
         })
 
 
-
 # Inbox
 @app.get("/inbox", response_class=HTMLResponse)
 async def inbox(request: Request):
@@ -374,3 +365,81 @@ async def inbox(request: Request):
     })
 
 
+@app.get("/bank", response_class=HTMLResponse)
+async def bank_get(request: Request):
+    user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/apply", status_code=303)
+
+    # Fetch balance
+    result = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
+    balance = result.data[0]["pufbs"] if result.data else 0
+
+    # Fetch all usernames for dropdown
+    result_users = supabase.table("users").select("username").execute()
+    users = [u["username"] for u in result_users.data]
+
+    return templates.TemplateResponse("bank.html", {
+        "request": request,
+        "balance": balance,
+        "users": users,
+        "current_user": user["name"]
+    })
+
+
+@app.post("/bank/transfer", response_class=HTMLResponse)
+async def bank_transfer(
+    request: Request,
+    recipient: str = Form(...),
+    amount: int = Form(...)
+):
+    user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/apply", status_code=303)
+
+    sender = user["name"]
+
+    # Fetch balances
+    sender_res = supabase.table("users").select("pufbs").eq("username", sender).execute()
+    recipient_res = supabase.table("users").select("pufbs").eq("username", recipient).execute()
+
+    if not sender_res.data or not recipient_res.data:
+        return templates.TemplateResponse("bank.html", {
+            "request": request,
+            "error": "User not found!",
+            "balance": sender_res.data[0]["pufbs"] if sender_res.data else 0,
+            "users": [],
+            "current_user": sender
+        })
+
+    sender_balance = sender_res.data[0]["pufbs"]
+    recipient_balance = recipient_res.data[0]["pufbs"]
+
+    # Check funds
+    if amount <= 0 or amount > sender_balance:
+        return templates.TemplateResponse("bank.html", {
+            "request": request,
+            "error": "Insufficient funds!",
+            "balance": sender_balance,
+            "users": [recipient],  # minimal reload
+            "current_user": sender
+        })
+
+    # Update balances
+    new_sender_balance = sender_balance - amount
+    new_recipient_balance = recipient_balance + amount
+
+    try:
+        supabase_server.table("users").update({"pufbs": new_sender_balance}).eq("username", sender).execute()
+        supabase_server.table("users").update({"pufbs": new_recipient_balance}).eq("username", recipient).execute()
+
+        return RedirectResponse("/bank", status_code=303)
+
+    except Exception as e:
+        return templates.TemplateResponse("bank.html", {
+            "request": request,
+            "error": f"Transaction failed: {e}",
+            "balance": sender_balance,
+            "users": [],
+            "current_user": sender
+        })
