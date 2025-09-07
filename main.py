@@ -357,8 +357,6 @@ async def inbox(request: Request):
         f"recipient.eq.{email},recipient.is.null,recipient.eq."
     ).order("sent_at", desc=True).execute()
 
-    print("Inbox query result:", result.data)
-
     return templates.TemplateResponse("inbox.html", {
         "request": request,
         "messages": result.data
