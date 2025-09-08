@@ -13,16 +13,20 @@
     {% if not greeting %}
         <a href="/apply">Apply / Login</a>
     {% else %}
-        <a href="/bank">Bank</a> |   <!-- 👈 New link -->
+        <a href="/bank">Bank</a> |
         <a href="/inbox">Inbox</a> |
         <a href="/send_mail">Send Mail</a> |
-        <a href="/logout">Logout</a>
+        <a href="/logout">Logout</a> |
+        {% if greeting %}
+            <a href="/transactions">Transactions</a> |
+        {% endif %}
+
     {% endif %}
 
     </nav>
     {% if greeting %}
       <div id="greeting">
-        {{ greeting }} | 💰 {{ user_pufbs }} PUFBs
+        {{ greeting }} | 💰 {{ user_pufbs }} PUFBs, {{ user_cybucks }} Cybucks, {{ user_aquilines }} Aquilines
       </div>
     {% endif %}
 </header>
