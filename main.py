@@ -364,15 +364,24 @@ async def inbox(request: Request):
 
     email = user["name"] + "@aqualithia.org"
 
-    # Fetch messages addressed to user or broadcast
-    result = supabase.table("messages").select("*").or_(
-        f"recipient.eq.{email},recipient.is.null,recipient.eq."
-    ).order("sent_at", desc=True).execute()
+    if user.get("is_admin", False):
+        # Admins see all messages
+        result = supabase.table("messages").select("*").order("sent_at", desc=True).execute()
+    else:
+        # Normal users → only their inbox + broadcasts
+        result = supabase.table("messages").select("*").or_(
+            f"recipient.eq.{email},recipient.is.null,recipient.eq."
+        ).order("sent_at", desc=True).execute()
+
+    messages = result.data if result.data else []
 
     return templates.TemplateResponse("inbox.html", {
         "request": request,
-        "messages": result.data
+        "messages": messages,
+        "current_user_email": email,
+        "is_admin": user.get("is_admin", False)
     })
+
 
 
 @app.get("/bank", response_class=HTMLResponse)
@@ -385,8 +394,11 @@ async def bank_get(request: Request):
     resultpufbs = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
     resultcybucks = supabase.table("users").select("Cybucks").eq("username", user["name"]).execute()
     resultaquilines = supabase.table("users").select("Aquilines").eq("username", user["name"]).execute()
-    balance = resultpufbs.data[0]["pufbs"] if resultpufbs.data else 0, resultcybucks.data[0]["Cybucks"] if \
-        resultcybucks.data else 0, resultaquilines.data[0]["Aquilines"] if resultaquilines.data else 0
+    balance = {
+        "pufbs": resultpufbs.data[0].get("pufbs", 0) if resultpufbs.data else 0,
+        "cybucks": resultcybucks.data[0].get("Cybucks", 0) if resultcybucks.data else 0,
+        "aquilines": resultaquilines.data[0].get("Aquilines", 0) if resultaquilines.data else 0
+    }
 
     # Fetch all usernames for dropdown
     result_users = supabase.table("users").select("username").execute()
@@ -446,6 +458,18 @@ async def bank_transfer(
     try:
         supabase_server.table("users").update({currency: new_sender_balance}).eq("username", sender).execute()
         supabase_server.table("users").update({currency: new_recipient_balance}).eq("username", recipient).execute()
+        # Update balances
+        supabase_server.table("users").update({currency: new_sender_balance}).eq("username", sender).execute()
+        supabase_server.table("users").update({currency: new_recipient_balance}).eq("username", recipient).execute()
+
+        # Log transaction
+        supabase_server.table("transactions").insert({
+            "sender": sender,
+            "recipient": recipient,
+            "currency": currency,
+            "amount": amount,
+            "timestamp": datetime.utcnow().isoformat()
+        }).execute()
 
         return RedirectResponse("/bank", status_code=303)
 
@@ -457,7 +481,20 @@ async def bank_transfer(
             "users": [],
             "current_user": sender
         })
+@app.get("/transactions", response_class=HTMLResponse)
+async def transactions(request: Request):
+    user = request.session.get("user")
+    if not user or not user.get("is_admin", False):
+        return RedirectResponse("/", status_code=303)
 
+    result = supabase.table("transactions").select("*").order("timestamp", desc=True).execute()
+    txns = result.data if result.data else []
+    print(result)
+
+    return templates.TemplateResponse("transactions.html", {
+        "request": request,
+        "transactions": txns
+    })
 @app.get("/healthz")
 async def healthcheck():
     return {"status": "ok"}
