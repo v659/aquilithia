@@ -1,22 +1,21 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h1>📥 Inbox</h1>
+<h2>📥 Inbox</h2>
 
 {% if messages %}
   <div class="inbox">
     {% for msg in messages %}
-      <div class="message-card">
+
+      <div class="message-card {% if is_admin and msg.recipient not in [None, current_user_email] %}admin-other-message{% endif %}">
         <div class="message-header">
           <span class="subject">{{ msg.subject }}</span>
-          <span class="date">{{ msg.sent_at | replace("T", " ") }}</span>
+          <span class="date">{{ msg.sent_at }}</span>
         </div>
         <div class="message-meta">
-          <span class="from">From: <b>{{ msg.sender }}</b></span> |
-          <span class="to">To: <b>{{ msg.recipient if msg.recipient else "Everyone" }}</b></span>
+          From: {{ msg.sender }} → To: {{ msg.recipient if msg.recipient else "Everyone" }}
         </div>
-        <div class="message-body">
-          {{ msg.body }}
-        </div>
+        <div class="message-body">{{ msg.body }}</div>
       </div>
     {% endfor %}
   </div>
