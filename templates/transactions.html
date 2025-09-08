@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>📜 Transaction History</h1>
+
+{% if transactions %}
+  <table style="width:100%; border-collapse:collapse; margin-top:1rem;">
+    <thead>
+      <tr style="background:#0a6d8c; color:white;">
+        <th>Sender</th>
+        <th>Recipient</th>
+        <th>Currency</th>
+        <th>Amount</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for txn in transactions %}
+      <tr style="background:#1a1d24; color:#e0faff; text-align:center;">
+        <td>{{ txn.sender }}</td>
+        <td>{{ txn.recipient }}</td>
+        <td>{{ txn.currency }}</td>
+        <td>{{ txn.amount }}</td>
+        <td>{{ txn.timestamp | replace("T", " ") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No transactions found.</p>
+{% endif %}
+{% endblock %}
