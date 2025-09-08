@@ -5,7 +5,7 @@
 
 <section>
   <h2>Your Balance</h2>
-  <p style="font-size:1.5rem; font-weight:bold; color:#0af;">💰 {{ balance }} PUFBs</p>
+  <p style="font-size:1.5rem; font-weight:bold; color:#0af;">💰 {{ balance[0] }} PUFBs, {{ balance[1] }} Cybucks, {{ balance[2] }} Aquilines</p>
 </section>
 
 <hr>
@@ -27,6 +27,12 @@
           <option value="{{ user }}">{{ user }}</option>
         {% endif %}
       {% endfor %}
+    </select><br><br>
+    <label for="currency">Currency:</label>
+    <select name="currency" id="currency" required>
+      <option>pufbs</option>
+      <option>Cybucks</option>
+      <option>Aquilines</option>
     </select><br><br>
 
     <label for="amount">Amount (PUFBs):</label>
