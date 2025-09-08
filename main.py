@@ -151,12 +151,20 @@ async def index(request: Request):
     greeting = None
     timestamp = int(datetime.utcnow().timestamp())
     user_pufbs = None
+    user_cybucks = None
+    user_aquilines = None
     if user:
-        result = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
-        if result.data:
-            user_pufbs = result.data[0].get("pufbs") or 0
+        resultpufbs = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
+        resultcybucks = supabase.table("users").select("Cybucks").eq("username", user["name"]).execute()
+        resultaquilines = supabase.table("users").select("Aquilines").eq("username", user["name"]).execute()
+        if resultpufbs.data:
+            user_pufbs = resultpufbs.data[0].get("pufbs") or 0
+            user_cybucks = resultcybucks.data[0].get("Cybucks") or 0
+            user_aquilines = resultaquilines.data[0].get("Aquilines") or 0
         else:
             user_pufbs = 0
+            user_cybucks = 0
+            user_aquilines = 0
 
         # normal admin check
         if user.get("is_admin", False):
@@ -172,7 +180,9 @@ async def index(request: Request):
             "request": request,
             "greeting": greeting,
             "timestamp": timestamp,
-            "user_pufbs": user_pufbs
+            "user_pufbs": user_pufbs,
+            "user_cybucks": user_cybucks,
+            "user_aquilines": user_aquilines
         }
     )
 
@@ -229,7 +239,9 @@ async def apply_post(request: Request, name: str = Form(...), email: str = Form(
             "email": email,
             "password": hashed_password,
             "is_admin": is_admin,
-            "pufbs": 0  # new users start with 0 PUFBs
+            "pufbs": 100,  # new users start with 0 PUFBs
+            "Cybucks": 100,
+            "Aquilines": 100
         }
         try:
             supabase_server.table("users").insert(data).execute()
@@ -370,8 +382,11 @@ async def bank_get(request: Request):
         return RedirectResponse("/apply", status_code=303)
 
     # Fetch balance
-    result = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
-    balance = result.data[0]["pufbs"] if result.data else 0
+    resultpufbs = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
+    resultcybucks = supabase.table("users").select("Cybucks").eq("username", user["name"]).execute()
+    resultaquilines = supabase.table("users").select("Aquilines").eq("username", user["name"]).execute()
+    balance = resultpufbs.data[0]["pufbs"] if resultpufbs.data else 0, resultcybucks.data[0]["Cybucks"] if \
+        resultcybucks.data else 0, resultaquilines.data[0]["Aquilines"] if resultaquilines.data else 0
 
     # Fetch all usernames for dropdown
     result_users = supabase.table("users").select("username").execute()
@@ -389,6 +404,7 @@ async def bank_get(request: Request):
 async def bank_transfer(
     request: Request,
     recipient: str = Form(...),
+    currency: str = Form(...),
     amount: int = Form(...)
 ):
     user = request.session.get("user")
@@ -398,20 +414,20 @@ async def bank_transfer(
     sender = user["name"]
 
     # Fetch balances
-    sender_res = supabase.table("users").select("pufbs").eq("username", sender).execute()
-    recipient_res = supabase.table("users").select("pufbs").eq("username", recipient).execute()
+    sender_res = supabase.table("users").select(currency).eq("username", sender).execute()
+    recipient_res = supabase.table("users").select(currency).eq("username", recipient).execute()
 
     if not sender_res.data or not recipient_res.data:
         return templates.TemplateResponse("bank.html", {
             "request": request,
             "error": "User not found!",
-            "balance": sender_res.data[0]["pufbs"] if sender_res.data else 0,
+            "balance": sender_res.data[0][currency] if sender_res.data else 0,
             "users": [],
             "current_user": sender
         })
 
-    sender_balance = sender_res.data[0]["pufbs"]
-    recipient_balance = recipient_res.data[0]["pufbs"]
+    sender_balance = sender_res.data[0][currency]
+    recipient_balance = recipient_res.data[0][currency]
 
     # Check funds
     if amount <= 0 or amount > sender_balance:
@@ -428,8 +444,8 @@ async def bank_transfer(
     new_recipient_balance = recipient_balance + amount
 
     try:
-        supabase_server.table("users").update({"pufbs": new_sender_balance}).eq("username", sender).execute()
-        supabase_server.table("users").update({"pufbs": new_recipient_balance}).eq("username", recipient).execute()
+        supabase_server.table("users").update({currency: new_sender_balance}).eq("username", sender).execute()
+        supabase_server.table("users").update({currency: new_recipient_balance}).eq("username", recipient).execute()
 
         return RedirectResponse("/bank", status_code=303)
 
