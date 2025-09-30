@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -6,9 +6,8 @@ from supabase import create_client, Client
 import bcrypt
 from dotenv import load_dotenv
 from starlette.middleware.sessions import SessionMiddleware
-from datetime import datetime
+from starlette.middleware.base import BaseHTTPMiddleware
 import os
-import uuid
 import re
 import requests
 import json
@@ -23,6 +22,33 @@ supabase_server: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)  # f
 # Simple in-memory session store for demo
 sessions = {}
 app = FastAPI()
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response: Response = await call_next(request)
+
+        # Clickjacking protection
+        response.headers["X-Frame-Options"] = "DENY"
+
+        # Prevent content-type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # Strict-Transport-Security (HSTS) → forces HTTPS
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+
+        # Basic Content Security Policy (CSP)
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "frame-ancestors 'none';"
+        )
+
+        return response
+
+# Register the middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "supersecret"))
 # Mount static folder for CSS
 
@@ -153,10 +179,17 @@ async def index(request: Request):
     user_pufbs = None
     user_cybucks = None
     user_aquilines = None
+
+    is_admin = False
+    is_logged_in = False
+
     if user:
+        is_logged_in = True
+
         resultpufbs = supabase.table("users").select("pufbs").eq("username", user["name"]).execute()
         resultcybucks = supabase.table("users").select("Cybucks").eq("username", user["name"]).execute()
         resultaquilines = supabase.table("users").select("Aquilines").eq("username", user["name"]).execute()
+
         if resultpufbs.data:
             user_pufbs = resultpufbs.data[0].get("pufbs") or 0
             user_cybucks = resultcybucks.data[0].get("Cybucks") or 0
@@ -167,9 +200,8 @@ async def index(request: Request):
             user_aquilines = 0
 
         # normal admin check
-        if user.get("is_admin", False):
-            greeting = f"Hello {user['name']} (admin)!"
-        elif user.get("fake_admin", False):  # 🎭 troll flag
+        if user.get("is_admin", False) or user.get("fake_admin", False):
+            is_admin = True
             greeting = f"Hello {user['name']} (admin)!"
         else:
             greeting = f"Hello {user['name']}!"
@@ -182,9 +214,13 @@ async def index(request: Request):
             "timestamp": timestamp,
             "user_pufbs": user_pufbs,
             "user_cybucks": user_cybucks,
-            "user_aquilines": user_aquilines
+            "user_aquilines": user_aquilines,
+            "user": user,
+            "is_admin": is_admin,
+            "is_logged_in": is_logged_in
         }
     )
+
 
 
 @app.post("/ask_ai", response_class=JSONResponse)
